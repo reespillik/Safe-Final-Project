@@ -1,0 +1,87 @@
+#include <msp430.h>
+
+#define ROW1 BIT0
+#define ROW2 BIT1
+#define ROW3 BIT2
+#define ROW4 BIT3
+#define COL1 BIT0
+#define COL2 BIT1
+#define COL3 BIT2
+#define COL4 BIT4
+#define TARGET_VAL 11
+
+const char rowMask = ROW1 + ROW2 + ROW3 + ROW4;
+const char colMask = COL1 + COL2 + COL3 + COL4;
+
+// Function Declarations
+void gpioInit();
+char readCols();
+char readRows();
+void checkValue(char val);
+char keyValue(char row, char col);
+
+int main(void)
+{
+    WDTCTL = WDTPW | WDTHOLD;   // stop watchdog timer
+    gpioInit();
+
+    char col = 0;
+    char row = 0;
+    char val = 0;
+
+    while(1){
+        col = readCols();
+        row = readRows();
+        val = keyValue(row, col);
+        checkValue(val);
+    }
+
+    return 0;
+}
+
+void gpioInit(){
+    // Initialize Keypad Pins
+    P5SEL0 &= ~rowMask;  // Set P5.x as GPIO
+    P5SEL1 &= ~rowMask;
+    P5DIR |= rowMask;    // Set rows outputs
+    P5OUT |= rowMask;    // Set all Rows to 1
+
+    P2SEL0 &= ~colMask;  // Set P2.x as GPIO
+    P2SEL1 &= ~colMask;
+    P2DIR &= ~colMask;   // Set cols to inputs
+    P2REN |= colMask;    // Enable Pulldown Resistors
+    P2OUT &= ~colMask;   // Set all columns to 0
+}
+
+char readCols(){
+    char cols = P2IN & colMask;
+    switch(cols){
+    case COL1:  return 0;
+    case COL2:  return 1;
+    case COL3:  return 2;
+    case COL4:  return 3;
+    default:    return 0xFF;
+    }
+}
+
+char readRows(){
+    char rows = P5IN & rowMask;
+    switch(rows){
+    case ROW1:  return 0;
+    case ROW2:  return 1;
+    case ROW3:  return 2;
+    case ROW4:  return 3;
+    default:    return 0xFF;
+    }
+}
+
+char keyValue(char row, char col){
+    return (row << 2) + col;
+}
+
+void checkValue(char val){
+    if (val == TARGET_VAL)
+        P1OUT |= BIT0; // Turn on LED
+    else
+        P1OUT &= ~BIT0; // Turn off LED
+}
