@@ -1,0 +1,18 @@
+#include <msp430.h>
+#include "rgbled.h"
+
+int main(void) {
+    // Stop watchdog timer
+    WDTCTL = WDTPW + WDTHOLD;
+
+    // Initialize RGB LED
+    rgbLEDInit();
+
+    // Set RGB LED to specific brightness
+    setRGBLED(128, 200, 12); // P6.0 is RED, P6.1 is GREEN, P6.2 is BLUE
+
+    // Main loop
+    while(1) {
+        // Your main code here
+    }
+}
