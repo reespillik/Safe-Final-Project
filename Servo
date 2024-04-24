@@ -1,0 +1,54 @@
+/*
+ * Program Name: Servo
+ *
+ * Program Description: Tests servo
+ *
+ * Ports Used: P6.4 (Servo), P4.1 (Button Left)
+ *
+ * Last Edited: 3/27/2024
+ */
+#include <msp430.h>
+
+void Servo_Set(int angle);
+
+int main(void) {
+    WDTCTL = WDTPW | WDTHOLD;     // Stop watchdog timer
+
+    P4DIR &= ~BIT1;          // sets pin 4.1 as input
+    P4REN |= BIT1;           // activates the pullup pulldown resistor
+    P4OUT |= BIT1;
+
+    P4IES |= BIT1; // Set interrupt to trigger on falling edge
+    P4IE |= BIT1;  // Enable interrupt for button pin
+    P4IFG &= ~BIT1;
+
+    P6DIR |= BIT4;           // P6.4 output
+    P6SEL0 |= BIT4;          // P6.4 options select
+
+    PM5CTL0 &= ~LOCKLPM5; // Disable the GPIO power-on default high-impedance mode
+                             // to activate previously configured port settings
+
+    TB3CCR0 = 20000;        // PWM Period
+    TB3CCTL5 = OUTMOD_7;    // CCR1 reset/set
+    TB3CCR5 = 0;            // CCR1 PWM duty cycle 2500(180 degrees) 550(0 degrees) 1500(90 degrees)
+    TB3CTL = TBSSEL__SMCLK | MC__UP | TBCLR;  // SMCLK, up mode, clear TBR
+    __bis_SR_register(GIE);             // Enter LPM3
+    __no_operation();                   // For debugger
+}
+
+#pragma vector=PORT4_VECTOR
+__interrupt void Port_4(void) {
+    P4IFG &= ~BIT1;
+    Servo_Set(180);
+}
+
+void Servo_Set(int angle){
+   switch(angle){
+      case 0: TB3CCR5 = 550;
+   break;
+      case 90: TB3CCR5 = 1500;
+   break;
+      case 180: TB3CCR5 = 2500;
+   break;
+   }
+}
