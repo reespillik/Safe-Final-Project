@@ -1,0 +1,51 @@
+/*
+ * Program Name: Solenoid
+ *
+ * Program Description: Tests solenoid
+ *
+ * Ports Used: P6.3 (Solenoid), P4.1 (Button Left)
+ *
+ * Last Edited: 3/27/2024
+ */
+#include <msp430.h>
+
+#define SOLENOID_PIN BIT4
+#define BUTTON_PIN BIT1
+
+void gpioInit() {
+    P4DIR |= SOLENOID_PIN;    // Set P4.4 as output for solenoid
+    P4OUT |= SOLENOID_PIN;    // Initially set solenoid high to disengage latch
+
+    P4DIR &= ~BUTTON_PIN;     // Set P4.1 as input for button
+    P4REN |= BUTTON_PIN;      // Enable pull-up resistor for button
+    P4OUT |= BUTTON_PIN;      // Set pull-up resistor for button
+}
+
+void latch_engage() {
+    P4OUT &= ~SOLENOID_PIN;   // Set P4.4 low to engage latch (activate solenoid)
+}
+
+void latch_disengage() {
+    P4OUT |= SOLENOID_PIN;    // Set P4.4 high to disengage latch (deactivate solenoid)
+}
+
+int is_button_pressed() {
+    return !(P4IN & BUTTON_PIN);  // Check if button is pressed
+}
+int main(void) {
+    WDTCTL = WDTPW | WDTHOLD; // Stop watchdog timer
+
+    gpioInit();               // Initialize GPIO
+    PM5CTL0 &= ~LOCKLPM5; // Disable the GPIO power-on default high-impedance mode
+                                 // to activate previously configured port settings
+
+    while(1) {
+        if (is_button_pressed()) {
+            latch_disengage(); // Disengage the latch (deactivate solenoid)
+        } else {
+            latch_engage();    // Engage the latch (activate solenoid)
+        }
+    }
+
+    return 0;
+}
