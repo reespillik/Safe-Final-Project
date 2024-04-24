@@ -1,0 +1,54 @@
+/*
+ * Program Name: Buzzer
+ *
+ * Program Description: Tests buzzer
+ *
+ * Ports Used: P6.3 (Buzzer), P4.1 (Button Left)
+ *
+ * Last Edited: 3/27/2024
+ */
+#include <msp430.h>
+
+#define BUZZER_PIN BIT3
+#define BUTTON1_PIN BIT1
+
+void gpioInit() {
+    P6DIR |= BUZZER_PIN;    // Set P6.3 as output for buzzer
+    P6OUT &= ~BUZZER_PIN;   // Initially turn off the buzzer
+
+    P4DIR &= ~BUTTON1_PIN;  // Set P4.1 as input for button 1
+    P4REN |= BUTTON1_PIN;   // Enable pull-up resistor for button 1
+    P4OUT |= BUTTON1_PIN;   // Set pull-up resistor for button 1
+}
+
+void Buzzer_on() {
+    P6OUT ^= BUZZER_PIN;   // Set P6.3 high to turn on the buzzer
+}
+
+void Buzzer_off() {
+    P6OUT &= ~BUZZER_PIN;  // Set P6.3 low to turn off the buzzer
+}
+
+int is_button1_pressed() {
+    return !(P4IN & BUTTON1_PIN);  // Check if button 1 is pressed
+}
+
+int main(void) {
+    WDTCTL = WDTPW | WDTHOLD; // Stop watchdog timer
+
+    gpioInit();               // Initialize GPIO
+
+    PM5CTL0 &= ~LOCKLPM5; // Disable the GPIO power-on default high-impedance mode
+                             // to activate previously configured port settings
+
+    while(1) {
+        if (is_button1_pressed()) {
+            Buzzer_on();      // Turn the buzzer on
+        } else {
+            Buzzer_off();     // Turn the buzzer off
+        }
+        __delay_cycles(500);
+    }
+
+    return 0;
+}
